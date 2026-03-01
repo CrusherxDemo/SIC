@@ -1,0 +1,80 @@
+Practical No. 1 
+Aim: Configure Cisco Routers for OSPF MD5 authentication, SSH, NTP and Syslog.
+Enable password: ciscoenpa55
+
+1A] Configure OSPF MD5 Authentication
+
+Step 1: Configure OSPF MD5 authentication for all the routers in area 0.
+
+En
+Password: ciscoenpa55
+Conf t
+Router ospf 1
+Area 0 authentication message-digest
+
+Step 2: Configure the MD5 key for all the routers in area 0.
+
+R1
+int s0/0/0
+Ip ospf message-digest-key 1 md5 MD5pa55
+
+R2
+Int s0/0/0
+Ip ospf message-digest-key 1 md5 MD5pa55
+Int s0/0/1
+Ip ospf message-digest-key 1 md5 MD5pa55
+
+R3
+Int s0/0/1
+Ip ospf message-digest-key 1 md5 MD5pa55
+
+Step 3: Verify configurations.
+
+R1#sh ip ospf int (Take snapshot) 
+R2#sh ip ospf int (Take snapshot)
+R3#sh ip ospf int (Take snapshot)
+
+1B] Configure NTP
+
+Step 1: Enable NTP authentication on PC-A
+
+On PC-A, click NTP under the Services tab to verify NTP service is enabled.  
+To configure NTP authentication, click Enable under Authentication. Use key 1 and password NTPpa55 for authentication.
+
+Step 2: Configure R1, R2, and R3 as NTP clients.
+
+ntp server 192.168.1.5
+Verify clients - sh ntp status
+
+
+
+Step 3: Configure routers to update hardware clock.
+
+ntp update-calendar sh clock
+
+Step 4: Configure NTP authentication on the routers.
+
+conf t
+ntp authenticate 
+ntp trusted-key 1  
+ntp authentication-key 1 md5 NTPpa55
+
+Step 5: Configure routers to timestamp log messages.
+
+1. service timestamps log datetime msec
+
+1C] Configure syslog server
+
+Step 1: Configure the routers to identify the remote host (Syslog Server) that will receive logging messages.
+
+conf t
+logging host 192.168.1.6
+ctrl+z
+
+Step 2: Verify logging configuration.
+
+sh logging
+
+Step 3: Examine logs of the Syslog Server.
+
+From the Services tab of the Syslog Server’s dialogue box, select the Syslog services button. Observe the logging messages received from the routers.

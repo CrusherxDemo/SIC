@@ -1,0 +1,160 @@
+Practical No. 8 
+Aim: Configure and verify a site-to-site IPsec VPN using CLI.
+
+Password for console line: ciscoconpa55
+Password for vty lines: ciscovtypa55
+Enable password: ciscoenpa55
+SSH username and password: SSHadmin / ciscosshpa55
+
+A] Configure IPsec Parameters on R1 
+
+Step 1: Test connectivity. 
+Ping from PC-A to PC-C.
+Ping 192.168.3.3
+
+Step 2: Enable the Security Technology package. 
+
+a] On R1, issue the show version command to view the Security Technology package license information. 
+
+User Access Verification 
+Password: 
+R1>en 
+Password:
+R1#sh version
+
+b] If the Security Technology package has not been enabled, use the following command to enable the package. 
+
+R1#conf t 
+R1(config)#license boot module c1900 technology-package securityk9 
+
+c] Accept the end-user license agreement. 
+
+ACCEPT? [yes/no]: yes 
+R1(config)#: 
+%IOS_LICENSE_IMAGE_APPLICATION-6-LICENSE_LEVEL: Module name = C1900 Next reboot level = securityk9 and License = securityk9
+
+d] Save the running-config and reload the router to enable the security license. 
+
+R1(config)#end 
+R1# 
+%SYS-5-CONFIG_I: Configured from console by console 
+R1#copy running-config startup-config 
+Destination filename [startup-config]? 
+Building configuration... 
+[OK] 
+R1# 
+R1#reload 
+Proceed with reload? [confirm](press enter) 
+
+e] Verify that the Security Technology package has been enabled by using the show version command. 
+
+User Access Verification 
+Password: 
+%LINEPROTO-5-UPDOWN: Line protocol on Interface Serial0/0/0, changed state to up 00:00:20: %OSPF-5-ADJCHG: Process 101, Nbr 192.168.2.1 on Serial0/0/0 from LOADING to FULL, Loading Done 
+
+Password: 
+R1>en 
+Password: 
+R1#sh version
+
+Step 3: Identify interesting traffic on R1
+
+R1# R1#conf t 
+R1(config)#access-list 110 permit ip 192.168.1.0 0.0.0.255 192.168.3.0 0.0.0.255
+
+Step 4: Configure the IKE Phase 1 ISAKMP policy on R1.
+
+Note: The highest DH group currently supported by Packet Tracer is group 5. In a production network, you would configure at least DH 14. 
+
+R1(config)#crypto isakmp policy 10 
+R1(config-isakmp)#encryption aes 256 
+R1(config-isakmp)#authentication pre-share 
+R1(config-isakmp)#group 5 
+R1(config-isakmp)#exit 
+R1(config)#crypto isakmp key vpnpa55 address 10.2.2.2
+
+Step 5: Configure the IKE Phase 2 IPsec policy on R1. 
+
+a] Create the transform-set VPN-SET to use esp-aes and esp-sha-hmac
+
+R1(config)#crypto ipsec transform-set VPN-SET esp-aes esp-sha-hmac
+
+b. Create the crypto map VPN-MAP that binds all of the Phase 2 parameters together.
+
+R1(config)#crypto map VPN-MAP 10 ipsec-isakmp 
+% NOTE: This new crypto map will remain disabled until a peer and a valid access list have been configured. 
+R1(config-crypto-map)#description VPN connection to R3 
+R1(config-crypto-map)#set peer 10.2.2.2 
+R1(config-crypto-map)#set transform-set VPN-SET 
+R1(config-crypto-map)#match address 110 
+R1(config-crypto-map)#exit 
+
+Step 6: Configure the crypto map on the outgoing interface. 
+R1(config)#int s0/0/0 
+R1(config-if)#crypto map VPN-MAP 
+*Jan 3 07:16:26.785: %CRYPTO-6-ISAKMP_ON_OFF: ISAKMP is ON
+
+B] Configure IPsec Parameters on R3 
+
+Step 1: Enable the Security Technology package. 
+
+a] On R3, issue the show version command to verify that the Security Technology package license information has been enabled. 
+
+User Access Verification 
+Password: 
+R3>en 
+Password: 
+R3#sh version
+
+b] If the Security Technology package has not been enabled, enable the package and reload R3. 
+
+Step 2: Configure router R3 to support a site-to-site VPN with R1. 
+
+R3#conf t 
+R3(config)#access-list 110 permit ip 192.168.3.0 0.0.0.255 192.168.1.0 0.0.0.255 
+
+Step 3: Configure the IKE Phase 1 ISAKMP properties on R3. 
+
+R3(config)#crypto isakmp policy 10 
+R3(config-isakmp)#encryption aes 256 
+R3(config-isakmp)#authentication pre-share 
+R3(config-isakmp)#group 5 
+R3(config-isakmp)#exit 
+R3(config)#crypto isakmp key vpnpa55 address 10.1.1.2 
+
+Step 4: Configure the IKE Phase 2 IPsec policy on R3. 
+
+a] Create the transform-set VPN-SET to use esp-aes and esp-sha-hmac. 
+
+R3(config)#crypto ipsec transform-set VPN-SET esp-aes esp-sha-hmac 
+
+b] Create the crypto map VPN-MAP that binds all of the Phase 2 parameters together. Use sequence number 10 and identify it as an ipsec-isakmp map. 
+
+R3(config)#crypto map VPN-MAP 10 ipsec-isakmp 
+% NOTE: This new crypto map will remain disabled until a peer and a valid access list have been configured. 
+R3(config-crypto-map)#description VPN connection to R1 
+R3(config-crypto-map)#set peer 10.1.1.2 
+R3(config-crypto-map)#set transform-set VPN-SET
+ R3(config-crypto-map)#match address 110 
+R3(config-crypto-map)#exit 
+
+Step 5: Configure the crypto map on the outgoing interface. Bind the VPN-MAP crypto map to the outgoing Serial 0/0/1 interface. 
+Note: Thisis not graded. 
+R3(config)#int s0/0/1 
+R3(config-if)#crypto map VPN-MAP 
+*Jan 3 07:16:26.785: %CRYPTO-6-ISAKMP_ON_OFF: ISAKMP is ON
+
+ C] Verify the IPsec VPN 
+
+Step 1: Verify the tunnel prior to interesting traffic. Issue the show crypto ipsec sacommand on R1. Notice that the number of packets encapsulated, encrypted, decapsulated, and decrypted are all set to 0.
+
+Step 2: Create interesting traffic. Ping PC-C from PC-A.
+
+Step 3: Verify the tunnel after interesting traffic. 
+On R1, re-issue the show crypto ipsec sacommand. Notice that the number of packets is more than 0, which indicates that the IPsec VPN tunnel is working.
+
+Step 4: Create uninteresting traffic. 
+Ping PC-B from PC-A. Note: Issuing a ping from router R1 to PC-C or R3 to PC-A is not interesting traffic.
+
+Step 5: Verify the tunnel. 
+On R1, re-issue the show crypto ipsec sacommand. Notice that the number of packets has not changed, which verifies that uninteresting traffic is not encrypted.

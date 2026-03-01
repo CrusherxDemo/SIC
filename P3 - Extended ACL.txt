@@ -1,0 +1,45 @@
+Practical No. 3 
+Aim: Configure Extended ACL’s on Cisco Routers.
+
+A] Configure, Apply and Verify an Extended Numbered ACL
+
+Step 1: Configure an ACL to permit FTP and ICMP.
+
+a] The statement would permit all TCP traffic. But we are only permitting FTP traffic; therefore, enter the eq keyword.
+
+En
+Conf t
+Access-list 100 permit tcp 172.22.34.64 0.0.0.31 host 172.22.34.62 eq ftp
+
+b] Create a second access list statement to permit ICMP (ping, etc.) traffic from PC1 to Server. Note that the access list number remains the same and no particular type of ICMP traffic needs to be specified.
+
+Conf t
+access-list 100 permit icmp 172.22.34.64 0.0.0.31 host 172.22.34.62
+
+c] All other traffic is denied, by default.
+
+Step 2: Apply the ACL on the correct interface to filter traffic
+
+From R1’s perspective, the traffic that ACL 100 applies to is inbound from the network connected to Gigabit Ethernet 0/0 interface. Enter interface configuration mode and apply the ACL.
+
+Int gigabitEthernet 0/0
+Ip access-group 100 in
+
+Step 3: Verify the ACL implementation.
+
+a] Ping from PC1 to Server. If the pings are unsuccessful, verify the IP addresses before continuing.
+
+Ping 172.22.34.62
+
+b] FTP from PC1 to Server. The username and password are both cisco.
+
+ftp 172.22.34.62
+
+c] Exit the FTP service of the Server.
+
+Quit
+
+d] Ping from PC1 to PC2. The destination host should be unreachable, because the traffic was not explicitly permitted.
+
+Ping 172.22.34.98
+

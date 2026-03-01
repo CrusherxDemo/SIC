@@ -1,0 +1,111 @@
+Practical No. 9 
+Aim: Configuring ASA basic setting Firewall using CLI.
+
+Enable password: ciscoenpa55 
+Console password: ciscoconpa55 
+Admin username and password: admin/adminpa55
+
+A] Verify Connectivity and Explore the ASA 
+
+Step 1: Verify connectivity. 
+The ASA is not currently configured. However, all routers, PCs, and the DMZ server are configured. Verify that PC-C can ping any router interface. PC-C is unable to ping the ASA, PC-B, or the DMZ server.
+
+Ping 172.16.3.1
+
+Step 2: Determine the ASA version, interfaces, and license. 
+Use the show version command to determine various aspects of this ASA device. 
+
+ciscoasa>en 
+Password: (press enter) 
+ciscoasa#sh version 
+ciscoasa#
+
+Step 3: Determine the file system and contents of flash memory. 
+
+a] Enter privileged EXEC mode. 
+A password has not been set. Press Enter when prompted for a password. 
+
+b] Use the show file system command to display the ASA file system and determine which prefixes are supported. 
+
+ciscoasa#sh file 
+
+system File Systems: Size(b) Free(b) Type Flags Prefixes * 128573440 123001856 disk rw disk0: flash: 
+
+c] Use the show flash: or show disk0: command to display the contents of flash memory. 
+
+ciscoasa#sh flash
+
+B] Configure ASA Settings and Interface Security Using the CLI
+
+Step 1: Configure the hostname and domain name. 
+
+a] Configure the ASA hostname as CCNAS-ASA. 
+
+ciscoasa#conf t 
+ciscoasa(config)#hostname CCNAS-ASA 
+
+
+
+b] Configure the domain name as ccnasecurity.com. 
+
+CCNAS-ASA(config)#domain-name ccnasecurity.com 
+
+Step 2: Configure the enable mode password. 
+Use the enable password command to change the privileged EXEC mode password to ciscoenpa55.
+
+CCNAS-ASA(config)#passwd cisco 
+CCNAS-ASA(config)#enable password ciscoenpa55 
+
+Step 3: Set the date and time. 
+Use the clock set command to manually set the date and time (this step is not scored). 
+
+CCNAS-ASA(config)#clock set 21:40:35 january 13 2019 
+
+Step 4: Configure the inside and outside interfaces. 
+You will only configure the VLAN 1 (inside) and VLAN 2 (outside) interfaces at this time. The VLAN 3 (dmz) interface will be configured in Part 5 of the activity. 
+
+a] Configure a logical VLAN 1 interface for the inside network (192.168.1.0/24) and set the security level to the highest setting of 100. 
+
+CCNAS-ASA(config)#interface vlan 1 
+CCNAS-ASA(config-if)#nameif inside 
+CCNAS-ASA(config-if)#ip address 192.168.1.1 255.255.255.0 
+CCNAS-ASA(config-if)#security-level 100 
+CCNAS-ASA(config-if)#exit 
+
+b] Create a logical VLAN 2 interface for the outside network (209.165.200.224/29), set the security level to the lowest setting of 0, and enable the VLAN 2 interface. 
+
+CCNAS-ASA(config)#interface vlan 2 
+CCNAS-ASA(config-if)#nameif outside 
+CCNAS-ASA(config-if)#ip address 209.165.200.226 255.255.255.248 
+CCNAS-ASA(config-if)#security-level 0 
+CCNAS-ASA(config-if)#exit
+
+c] Use the following verification commands to check your configurations
+
+Show interface ip brief
+Show ip address
+Show switch clan
+
+Step 5: Test connectivity to the ASA.
+
+a] You should be able to ping from PC-B to the ASA inside interface address (192.168.1.1). If the pings fail, troubleshoot the configuration as necessary. = Ping 192.168.1.1
+
+b] From PC-B, ping the VLAN 2 (outside) interface at IP address 209.165.200.226. You should not be able to ping this address. = ping 209.165.200.206
+
+
+C] Configure Routing, Address Translation, and Inspection Policy Using the CLI 
+
+Step 1: Configure a static default route for the ASA. 
+Configure a default static route on the ASA outside interface to enable the ASA to reach external networks. 
+
+a] Create a “quad zero” default route using the route command, associate it with the ASA outside interface, and point to the R1 G0/0 IP address (209.165.200.225) as the gateway of last resort. 
+
+CCNAS-ASA#conf t 
+CCNAS-ASA(config)#route outside 0.0.0.0 0.0.0.0 209.165.200.225 
+
+b. Issue the show route command to verify the static default route is in the ASA routing table.
+
+Show route
+
+
+

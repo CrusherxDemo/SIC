@@ -1,0 +1,134 @@
+Practical No. 7 
+Aim: Configuring Layer 2 Security.
+
+Enable password: ciscoenpa55 o Console password: ciscoconpa55
+SSH username and password: SSHadmin / ciscosshpa55
+
+A] Configure Root Bridge 
+
+Step 1: Determine the current root bridge. 
+From Central, issue the show spanning-tree command to determine the current root bridge, to see the ports in use, and to see their status.
+
+Step 2: Assign Central as the primary root bridge. 
+Using the spanning-tree vlan 1 root primary command, and assign Central as the root bridge. 
+
+Central#conf t 
+Central(config)#spanning-tree vlan 1 root primary 
+Central(config)# 
+
+Step 3: Assign SW-1 as a secondary root bridge. 
+Assign SW-1 as the secondary root bridge using the spanning-tree vlan 1 root secondary command. 
+
+SW-1>en 
+Password: 
+SW-1#conf t 
+SW-1(config)#spanning-tree vlan 1 root secondary 
+SW-1(config)# 
+
+Step 4: Verify the spanning-tree configuration. 
+Issue the show spanning-tree command to verify that Central is the root bridge. 
+
+Central# show spanning-tree
+
+B] Protect Against STP Attacks 
+
+Secure the STP parameters to prevent STP manipulation attacks. 
+
+Step 1: Enable PortFast on all access ports. 
+PortFast is configured on access ports that connect to a single workstation or server to enable them to become active more quickly. On the connected access ports of the SW-A and SW-B, use the spanning-tree portfast command. 
+
+SW-A>en 
+Password: 
+SW-A#conf t 
+SW-A(config)#interface range f0/1 - 4 
+SW-A(config-if-range)#spanning-tree portfast 
+%Portfast has been configured on FastEthernet0/4 but will only have effect when the interface is in a non-trunking mode. 
+
+
+SW-B>en 
+Password: 
+SW-B#conf t 
+SW-B(config)#interface range f0/1 - 4 
+SW-B(config-if-range)#spanning-tree portfast 
+%Portfast has been configured on FastEthernet0/4 but will only have effect when the interface is in a non-trunking mode. 
+
+Step 2: Enable BPDU guard on all access ports. 
+BPDU guard is a feature that can help prevent rogue switches and spoofing on access ports. Enable BPDU guard on SW-A and SW-B access ports. 
+
+SW-A#conf t 
+SW-A(config)#interface range f0/1 - 4 
+SW-A(config-if-range)#spanning-tree bpduguard enable 
+SW-A(config-if-range)# SW-B#conf t 
+
+SW-B(config)#interface range f0/1 - 4 
+SW-B(config-if-range)#spanning-tree bpduguard enable 
+SW-B(config-if-range)# 
+
+Note: Spanning-tree BPDU guard can be enabled on each individual port using the spanningtree bpduguard enable command in interface configuration mode or the spanning-tree portfast bpduguard default command in global configuration mode. For grading purposes in this activity, please use the spanning-tree bpduguard enable command. 
+
+Step 3: Enable root guard. 
+Root guard can be enabled on all ports on a switch that are not root ports. It is best deployed on ports that connect to other non-root switches. Use the show spanning-tree command to determine the location of the root port on each switch.
+
+On SW-1, enable root guard on ports F0/23 and F0/24. On SW-2, enable root guard on ports F0/23 and F0/24. 
+
+SW-1#conf t 
+SW-1(config)#interface range f0/23 - 24 
+SW-1(config-if-range)#spanning-tree guard root 
+SW-1(config-if-range)# 
+
+SW-2>en 
+Password:
+ SW-2#conf t 
+SW-2(config)#interface range f0/23 - 24 
+SW-2(config-if-range)#spanning-tree guard root 
+SW-2(config-if-range)# 
+
+C] Configure Port Security and Disable Unused Ports 
+
+Step 1: Configure basic port security on all ports connected to host devices. 
+This procedure should be performed on all access ports on SW-A and SW-B. Set the maximum number of learned MAC addresses to 2, allow the MAC address to be learned dynamically, and set the violation to shutdown. Note: A switch port must be configured as an access port to enable port security. 
+
+SW-A>en 
+Password: 
+SW-A#conf t 
+SW-A(config)#interface range f0/1 - 22 
+SW-A(config-if-range)#switchport mode access 
+SW-A(config-if-range)#switchport port-security 
+SW-A(config-if-range)#switchport port-security maximum 2 
+SW-A(config-if-range)#switchport port-security violation shutdown 
+SW-A(config-if-range)#switchport port-security mac-address sticky 
+SW-A(config-if-range)#
+
+SW-B>en 
+Password: 
+SW-B#conf t 
+SW-B(config)#interface range f0/1 - 22 
+SW-B(config-if-range)#switchport mode access 
+SW-B(config-if-range)#switchport port-security 
+SW-B(config-if-range)#switchport port-security maximum 2 
+SW-B(config-if-range)#switchport port-security violation shutdown 
+SW-B(config-if-range)#switchport port-security mac-address sticky 
+SW-B(config-if-range)# 
+
+Step 2: Verify port security. 
+
+a] On SW-A, issue the command show port-security interface f0/1 to verify that port security has been configured. 
+
+SW-A#show port-security interface f0/1
+
+b. Ping from C1 to C2 and issue the command show port-security interface f0/1 again to verify that the switch has learned the MAC address for C1.
+
+SW-A#show port-security interface f0/1
+
+Step 3: Disable unused ports. 
+Disable all ports that are currently unused. 
+
+SW-A#conf t 
+SW-A(config)#interface range f0/5 - 22 
+SW-A(config-if-range)#shutdown 
+
+SW-B>en 
+Password: 
+SW-B#conf t 
+SW-B(config)#interface range f0/5 - 22 
+SW-B(config-if-range)#shutdown
