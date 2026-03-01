@@ -1,0 +1,167 @@
+Practical No. 10
+
+Aim: Configuring IOS Intrusion Detection System (IDS).
+
+Enable password: ciscoenpa55
+Console password: ciscoconpa55
+SSH username and password: SSHadmin / ciscosshpa55
+
+Take topology of Practical 4. Change name of PC-A to Syslog and assign IP address 192.168.1.50. Add a new PC above switch S1, name it as PC-A and assign IP address 192.168.1.2. Connect PC-A from port FastEthernet0 to switch S1 port FastEthernet0/1. Change the IP address of PC-C to 192.168.3.2.
+
+A] Enable IOS IPS
+
+Note: Within Packet Tracer, the routers already have the signature files imported and in place. They are the default XML files in flash. For this reason, it is not necessary to configure the public crypto key and complete a manual import of the signature files.
+
+Step 1: Enable the Security Technology package.
+
+a) On R1, issue the show version command to view the Technology Package license information.
+
+User Access Verification
+Password:
+R1>en
+Password:
+R1#sh version
+
+b) If the Security Technology package has not been enabled, use the following command to enable the package.
+
+R1#conf t
+R1(config)#license boot module c1900 technology-package securityk9
+
+c) Accept the end user license agreement.
+
+ACCEPT? [yes/no]: yes
+
+d) Save the running-config and reload the router to enable the security license.
+
+R1(config)#exit
+R1#copy run start
+Destination filename [startup-config]?
+Building configuration...
+[OK]
+R1#reload
+User Access Verification
+Password:
+%LINEPROTO-5-UPDOWN: Line protocol on Interface Serial0/0/0, changed state to up
+R1>en
+Password:
+
+e) Verify that the Security Technology package has been enabled by using the show version command.
+
+R1#sh version
+
+Step 2: Verify network connectivity.
+
+a) Ping from PC-C to PC-A. The ping should be successful.
+
+b) Ping from PC-A to PC-C. The ping should be successful.
+
+Step 3: Create an IOS IPS configuration directory in flash.
+
+On R1, create a directory in flash using the mkdir command. Name the directory ipsdir.
+
+R1#mkdir ipsdir
+Create directory filename [ipsdir]?
+Created dir flash:ipsdir
+
+Step 4: Configure the IPS signature storage location.
+
+On R1, configure the IPS signature storage location to be the directory you just created.
+
+R1#conf t
+R1(config)#ip ips config location flash:ipsdir
+
+Step 5: Create an IPS rule.
+
+On R1, create an IPS rule name using the ip ips name name command in global configuration mode. Name the IPS rule iosips.
+
+R1(config)#ip ips name iosips
+
+Step 6: Enable logging.
+
+IOS IPS supports the use of syslog to send event notification. Syslog notification is enabled by default. If logging console is enabled, IPS syslog messages display.
+
+a) Enable syslog if it is not enabled.
+
+R1(config)#ip ips notify log
+
+b) Verify that the timestamp service for logging is enabled on the router using the show run command. Enable the timestamp service if it is not enabled.
+
+R1(config)#service timestamp log datetime msec
+
+c) Send log messages to the syslog server at IP address 192.168.1.50.
+
+R1(config)#logging host 192.168.1.50
+
+Step 7: Configure IOS IPS to use the signature categories.
+
+Retire the all signature category with the retired true command (all signatures within the signature release). Unretire the IOS_IPS Basic category with the retired false command.
+
+R1(config)#ip ips signature-category
+R1(config-ips-category)#category all
+R1(config-ips-category-action)#retired true
+R1(config-ips-category-action)#exit
+R1(config-ips-category)#category ios_ips basic
+R1(config-ips-category-action)#retired false
+R1(config-ips-category-action)#exit
+R1(config-ips-category)#exit
+Do you want to accept these changes? [confirm] (enter)
+Applying Category configuration to signatures ...
+%IPS-6-ENGINE_BUILDING: atomic-ip - 288 signatures - 6 of 13 engines
+%IPS-6-ENGINE_READY: atomic-ip - build time 30 ms - packets for this engine will be scanned
+
+Step 8: Apply the IPS rule to an interface.
+
+Apply the IPS rule to an interface with the ip ips name direction command in interface configuration mode. Apply the rule outbound on the G0/1 interface of R1. After you enable IPS, some log messages will be sent to the console line indicating that the IPS engines are being initialized.
+
+R1(config)#int g0/1
+R1(config-if)#ip ips iosips out
+R1(config-if)#
+*Mar 01, 00:04:52.044: %IPS-6-ENGINE_BUILDS_STARTED: 00:04:52 UTC Mar 01 1993
+*Mar 01, 00:04:52.044: %IPS-6-ENGINE_BUILDING: atomic-ip - 3 signatures - 1 of 13 engines
+*Mar 01, 00:04:52.044: %IPS-6-ENGINE_READY: atomic-ip - build time 8 ms - packets for this engine will be scanned
+*Mar 01, 00:04:52.044: %IPS-6-ALL_ENGINE_BUILDS_COMPLETE: elapsed time 8 ms
+R1(config-if)#exit
+
+B] Modify the Signature
+
+Step 1: Change the event-action of a signature.
+
+Un-retire the echo request signature (signature 2004, subsig ID 0), enable it, and change the signature action to alert and drop.
+
+R1(config)#ip ipssignature-definition
+R1(config-sigdef)#signature 2004 0
+R1(config-sigdef-sig)#status
+R1(config-sigdef-sig-status)#retired false
+R1(config-sigdef-sig-status)#enabled true
+R1(config-sigdef-sig-status)#exit
+R1(config-sigdef-sig)#engine
+R1(config-sigdef-sig-engine)#event-action produce-alert
+R1(config-sigdef-sig-engine)#event-action deny-packet-inline
+R1(config-sigdef-sig-engine)#exit
+R1(config-sigdef-sig)#exit
+R1(config-sigdef)#exit
+Do you want to accept these changes? [confirm] (enter)
+%IPS-6-ENGINE_BUILDS_STARTED:
+%IPS-6-ENGINE_BUILDING: atomic-ip - 303 signatures - 3 of 13 engines
+%IPS-6-ENGINE_READY: atomic-ip - build time 480 ms - packets for this engine will be scanned
+%IPS-6-ALL_ENGINE_BUILDS_COMPLETE: elapsed time 648 ms
+R1(config)#exit
+R1#
+*Mar 01, 00:08:18.088: SYS-5-CONFIG_I: Configured from console by console
+*Mar 01, 00:08:18.088: %SYS-6-LOGGINGHOST_STARTSTOP: Logging to host 192.168.1.50 port 514 started - CLI initiated
+
+Step 2: Use show commands to verify IPS.
+
+R1#sh ip ips all
+
+Step 3: Verify that IPS is working properly.
+
+a) From PC-C, attempt to ping PC-A. The pings should fail. This is because the IPS rule for event-action of an echo request was set to “deny-packet-inline”.
+
+b) From PC-A, attempt to ping PC-C. The ping should be successful. This is because the IPS rule does not cover echo reply. When PC-A pings PC-C, PC-C responds with an echo reply.
+
+Step 4: View the syslog messages.
+
+a) Click the Syslog server.
+b) Select the Services tab.
+c) In the left navigation menu, select SYSLOG to view the log file.
